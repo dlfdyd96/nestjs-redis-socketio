@@ -13,12 +13,16 @@
 
 이는 나중에 Redis와 Socket를 Adapter Pattern으로 적용하기 편리해지기 때문이다. 그리고 각 서버들은 `Docker`를 이용하여 실행한다.
 
+<br>
+
 ## 📋 TODO
 
-- [ ] Set up Docker
-- [ ] Set up Chatting Application
-- [ ] Apply Websocket Adapter
-- [ ]
+- [x] Set up Docker
+- [x] Set up Chatting Application
+- [x] Apply Websocket Adapter
+- [x] Test
+
+<br>
 
 ## 1. Set up Docker
 
@@ -63,6 +67,8 @@ $ docker ps
 CONTAINER ID   IMAGE     COMMAND                  CREATED         STATUS         PORTS                     NAMES
 959e05e10871   redis     "docker-entrypoint.s…"   7 seconds ago   Up 6 seconds   0.0.0.0:10300->6379/tcp   ilyong-redis
 ```
+
+<br>
 
 ## 2. Set up Chatting Application
 
@@ -171,13 +177,13 @@ $ nest generate gateway chat chat
   async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
     app.useStaticAssets(join(__dirname, '..', 'static'));
-    await app.listen(3000);
+    await app.listen(process.env.NODE_PORT);
   }
   bootstrap();
   ```
 
   ```html
-  <!-- assets/index.html -->
+  <!-- assets/3000/index.html -->
 
   <!DOCTYPE html>
   <html lang="en">
@@ -246,7 +252,7 @@ $ nest generate gateway chat chat
   ```
 
   ```js
-  // assets/main.js
+  // assets/3000/main.js
 
   const app = new Vue({
     el: '#app',
@@ -276,7 +282,7 @@ $ nest generate gateway chat chat
       },
     },
     created() {
-      this.socket = io('http://localhost:3000/chat');
+      this.socket = io('http://localhost:3000/chat'); // assets/3001 폴더에서 3001 포트로 수정해줍니다.
       this.socket.on('msgToClient', (message) => {
         this.receivedMessage(message);
       });
@@ -285,7 +291,7 @@ $ nest generate gateway chat chat
   ```
 
   ```css
-  <!-- assets/style.css -- > #messages {
+  <!-- assets/3000/style.css -- > #messages {
     height: 300px;
     overflow-y: scroll;
   }
@@ -296,6 +302,14 @@ $ nest generate gateway chat chat
   ```
 
   ![chat1](./images/chat1.png)
+
+> **참고** 💡
+>
+> `3000`폴더와 `3001`폴더를 따로 만들어 준 이유는, 서로 다른 port에서 적용하는 모습을 보여주기 위함입니다.
+>
+> 현재는 `3000` 포트로 연결된 기본적인 소켓 통신 모습입니다.
+
+<br>
 
 ## 3. Apply Websocket Adapter
 
@@ -332,11 +346,12 @@ $ nest generate gateway chat chat
   export class RedisIoAdapter extends IoAdapter {
     createIOServer(port: number, options?: ServerOptions): any {
       const server = super.createIOServer(port, options);
-      server.adapter(
-        redisIoAdapter.createAdapter(
-          `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
-        ),
-      );
+      const redisAdapter = redisIoAdapter({
+        host: process.env.REDIS_HOST,
+        port: process.env.REDIS_PORT,
+      });
+
+      server.adapter(redisAdapter);
       return server;
     }
   }
@@ -358,4 +373,40 @@ $ nest generate gateway chat chat
 >
 > [참고사이트](https://github.com/socketio/socket.io-redis#compatibility-table)
 
-### Test
+<br>
+
+## 4. Test
+
+- NestJS Server를 각각 3000, 3001 server로 실행합니다.
+
+  - scripts에서 환경변수 세팅을 위해 `cross-env` package를 설치해줍니다. ([cross-env](https://www.npmjs.com/package/cross-env))
+
+    ```sh
+    $ npm i cross-env
+    ```
+
+  - `assets`에서도 3000, 3001 로 구분하여 만들어 줍니다
+
+    - 서로 다른 포트에서 소켓이 통신을 확인하기 위함입니다.
+    - 자세한 내용은 [Github Repository](https://github.com/dlfdyd96/nestjs-redis-socketio) 의 `assets` directory에서 확인할 수 있습니다.
+
+  - package.json에서 scripts를 추가해줍니다.
+
+    ```json
+    "start:3000": "cross-env NODE_PORT=3000 nest start",
+    "start:3001": "cross-env NODE_PORT=3001 nest start",
+    ```
+
+- 서로 다른 포트에서 채팅이 통신이 되는지 확인합니다.
+  ![chat2](./images/chat2.png)
+  ㄴ 채팅 app page
+  ![chat3](./images/chat3.png)
+  ㄴ NestJS의 다른 port에서 실행한 모습
+
+<br>
+
+## References
+
+- https://docs.nestjs.com/websockets/gateways
+- https://docs.nestjs.com/websockets/adapter
+- https://github.com/socketio/socket.io-redis#compatibility-table

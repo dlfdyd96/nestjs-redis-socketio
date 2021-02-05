@@ -8,6 +8,6 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.useWebSocketAdapter(new RedisIoAdapter(app));
   app.useStaticAssets(join(__dirname, '..', 'static'));
-  await app.listen(3000);
+  await app.listen(process.env.NODE_PORT);
 }
 bootstrap();
