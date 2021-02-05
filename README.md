@@ -299,7 +299,7 @@ $ nest generate gateway chat chat
 
 ## 3. Apply Websocket Adapter
 
-### Redis Clustering
+### Redis PUB/SUB
 
 같은 서버가 Scale Out 하여 서버대수가 늘어나면 연결된 socket들도 분리가 됩니다. 이 때 Socket들을 관리해줄 중간 서버가 필요한데, 이는 Redis의 `PUB/SUB` 기능을 사용하여 관리합니다.
 
@@ -351,3 +351,11 @@ $ nest generate gateway chat chat
   app.useWebSocketAdapter(new RedisIoAdapter(app));
   // ...
   ```
+
+> **참고** 💡
+>
+> `socket.io-redis`는 `Socket.IO` server version과 대응해줘야합니다. 현재 예제에서, `socket.io-redis`의 version은 `5.4.0`을, `socket.io` version는 package-lock.json을 확인한 결과, `@nestjs/platform-socket.io` package를 설치하면 `2.4.1` version의 `socket.io`가 설치됩니다.
+>
+> [참고사이트](https://github.com/socketio/socket.io-redis#compatibility-table)
+
+### Test
