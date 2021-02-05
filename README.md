@@ -86,6 +86,7 @@ $ nest generate gateway chat chat
 
   ```sh
   $ npm i --save @nestjs/websockets @nestjs/platform-socket.io
+  $ npm i --save-dev @types/socket.io
   ```
 
 ### Setting Up Chatting Application
@@ -132,7 +133,7 @@ $ nest generate gateway chat chat
   } from '@nestjs/websockets';
   import { Server, Socket } from 'socket.io';
 
-  @WebSocketGateway({ namespace: 'chat' })
+  @WebSocketGateway({ namespace: 'chat' }) // namespace는 optional 입니다!
   export class ChatGateway
     implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit {
     private static readonly logger = new Logger(ChatGateway.name);
@@ -305,7 +306,7 @@ $ nest generate gateway chat chat
 
 > **참고** 💡
 >
-> `3000`폴더와 `3001`폴더를 따로 만들어 준 이유는, 서로 다른 port에서 적용하는 모습을 보여주기 위함입니다.
+> VueJS 정적 페이지가 있는 `assets`에서 `3000`폴더와 `3001`폴더를 따로 만들어 준 이유는, 서로 다른 port에서 적용하는 모습을 보여주기 위함입니다.
 >
 > 현재는 `3000` 포트로 연결된 기본적인 소켓 통신 모습입니다.
 
